@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --color-accent: #FFD60A;
+  --color-bg: #F9FAFB;
+  --color-ink: #111111;
+}
+
+@layer base {
+  body {
+    @apply bg-bg text-ink font-sans antialiased selection:bg-accent selection:text-ink transition-colors duration-500;
+  }
+  .dark body {
+    @apply bg-zinc-950 text-white;
+  }
+  /* Fluid crossfade transition for theme switching on content and container elements without breaking SVG / Chart / Logo animations */
+  body, 
+  body :not(svg, path, circle, rect, line, polygon, g, .motion-no-transition, canvas) {
+    transition-property: color, background-color, border-color, text-decoration-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 400ms;
+  }
+}
+
+.mono-label {
+  @apply font-mono text-[9px] uppercase tracking-[0.2em] font-bold text-ink/30 dark:text-white/60;
+}
+
+.glass-panel {
+  @apply bg-white border border-zinc-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-500;
+}
+
+.action-button {
+  @apply px-6 py-3 bg-ink text-white rounded-2xl text-[12px] font-bold uppercase tracking-wider transition-all hover:bg-zinc-800 active:scale-[0.98] hover:shadow-xl hover:shadow-ink/5 dark:bg-white dark:text-ink dark:hover:bg-zinc-200;
+}
+
+.markdown-body {
+  @apply text-[17px] leading-[1.6] font-normal text-ink/80 tracking-[-0.015em];
+}
+
+.dark .markdown-body {
+  @apply text-white;
+}
+
+/* Refined Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-zinc-400/20 rounded-full border-[3px] border-transparent bg-clip-padding hover:bg-zinc-400 transition-colors;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-zinc-400/40 rounded-full border-[2px] border-transparent bg-clip-padding hover:bg-accent;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-white/10 hover:bg-accent;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes eq-bar {
+  0%, 100% { height: 3px; }
+  50% { height: 14px; }
+}
+
+.animate-eq-1 { animation: eq-bar 0.6s ease-in-out infinite alternate; }
+.animate-eq-2 { animation: eq-bar 0.45s ease-in-out infinite alternate; }
+.animate-eq-3 { animation: eq-bar 0.8s ease-in-out infinite alternate; }
+.animate-eq-4 { animation: eq-bar 0.5s ease-in-out infinite alternate; }
