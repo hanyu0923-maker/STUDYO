@@ -1591,7 +1591,7 @@ export default function App() {
         next.add(username);
         return next;
       });
-
+      setTimeout(() => {
         if (collabVideoRef.current) {
           collabVideoRef.current.srcObject = stream;
         }
