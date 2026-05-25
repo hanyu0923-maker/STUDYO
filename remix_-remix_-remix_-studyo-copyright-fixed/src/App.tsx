@@ -66,7 +66,6 @@ import {
   LogOut
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import * as SocketIOClient from 'socket.io-client';
 import Logo from './components/Logo';
 import ReactPlayer from 'react-player';
 const Player = ReactPlayer as any;
@@ -497,7 +496,7 @@ export default function App() {
       setIsFocusSoundPlaying(true);
     }
   };
-  const [socket, setSocket] = useState<any>(null);
+  
   const [roomId, setRoomId] = useState<string>('');
   const [roomName, setRoomName] = useState<string>('');
   const [isJoinedRoom, setIsJoinedRoom] = useState(false);
@@ -1529,94 +1528,12 @@ export default function App() {
     { id: 'campfire', name: t.campfireSound, icon: 'Flame', url: '', type: 'synth' },
   ];
 
-  useEffect(() => {
-    const ioFunc = (SocketIOClient as any).io || (SocketIOClient as any).default || SocketIOClient;
-    const newSocket = typeof ioFunc === 'function' ? ioFunc() : null;
-    if (newSocket) {
-      setSocket(newSocket);
-      
-      newSocket.on("user-joined", (data: any) => {
-        setRoomUsers(data.users);
-      });
 
-      newSocket.on("user-left", (data: any) => {
-        setRoomUsers(data.users);
-      });
-
-      newSocket.on("room-history", (data: any) => {
-        setRoomMessages(data);
-      });
-
-      newSocket.on("new-message", (data: any) => {
-        setRoomMessages((prev: any) => [...prev, data]);
-      });
-
-      newSocket.on("user-audio-changed", (data: { username: string, isEnabled: boolean }) => {
-        setUsersWithMic(prev => {
-          const next = new Set(prev);
-          if (data.isEnabled) next.add(data.username);
-          else next.delete(data.username);
-          return next;
-        });
-      });
-
-      newSocket.on("user-video-changed", (data: { username: string, isEnabled: boolean }) => {
-        setUsersWithVideo(prev => {
-          const next = new Set(prev);
-          if (data.isEnabled) next.add(data.username);
-          else next.delete(data.username);
-          return next;
-        });
-      });
-
-      newSocket.on("user-hand-raised", (data: { username: string, isRaised: boolean }) => {
-        setRaisedHands(prev => {
-          const next = new Set(prev);
-          if (data.isRaised) next.add(data.username);
-          else next.delete(data.username);
-          return next;
-        });
-      });
-
-      newSocket.on("user-reacted", (data: { username: string, emoji: string, id: number }) => {
-        setUserEmojiReactions(prev => ({
-          ...prev,
-          [data.username]: { emoji: data.emoji, id: data.id }
-        }));
-        
-        setTimeout(() => {
-          setUserEmojiReactions(prev => {
-            const current = prev[data.username];
-            if (current && current.id === data.id) {
-              const next = { ...prev };
-              delete next[data.username];
-              return next;
-            }
-            return prev;
-          });
-        }, 3000);
-      });
-
-      newSocket.on("user-screen-shared", (data: { username: string, isSharing: boolean }) => {
-        setUsersSharingScreen(prev => {
-          const next = new Set(prev);
-          if (data.isSharing) next.add(data.username);
-          else next.delete(data.username);
-          return next;
-        });
-      });
-    }
-
-    return () => {
-      if (newSocket) newSocket.close();
-    };
-  }, []);
 
   const handleJoinRoom = () => {
-    if (!roomId.trim() || !socket) return;
+    
     const cleanRoomId = roomId.trim();
     const name = roomName.trim() || cleanRoomId;
-    socket.emit("join-room", cleanRoomId, username);
     setIsJoinedRoom(true);
     if (!savedRooms.find(r => r.id === cleanRoomId)) {
       setSavedRooms(prev => [...prev, { id: cleanRoomId, name }]);
@@ -1624,18 +1541,16 @@ export default function App() {
   };
 
   const handleCreateRoom = () => {
-    if (!socket) return;
+    
     const newRoomId = Math.floor(1000 + Math.random() * 9000).toString();
     const name = roomName.trim() || `${t.studyRoom} ${newRoomId}`;
     setRoomId(newRoomId);
-    socket.emit("join-room", newRoomId, username);
     setIsJoinedRoom(true);
     setSavedRooms(prev => [...prev, { id: newRoomId, name }]);
   };
 
   const handleLeaveRoom = () => {
-    if (socket && roomId) {
-      socket.emit("leave-room", roomId, username);
+    if (roomId) {
     }
     
     // Stop any video/screen tracks
@@ -1663,8 +1578,7 @@ export default function App() {
     if (!roomId) {
       setRoomId(activeRoomId);
     }
-    if (socket && !isJoinedRoom) {
-      socket.emit("join-room", activeRoomId, username);
+    if (!isJoinedRoom) {
       setIsJoinedRoom(true);
     }
     // Auto enable camera feed
@@ -1677,8 +1591,6 @@ export default function App() {
         next.add(username);
         return next;
       });
-      if (socket) {
-        socket.emit("toggle-video", activeRoomId, username, true);
       }
       setTimeout(() => {
         if (collabVideoRef.current) {
@@ -1700,8 +1612,7 @@ export default function App() {
     }
     setCollabVideoStream(null);
     setIsVideoChatEnabled(false);
-    if (socket && roomId) {
-      socket.emit("toggle-video", roomId, username, false);
+    if (roomId) {
     }
   };
 
@@ -1717,8 +1628,7 @@ export default function App() {
         next.delete(username);
         return next;
       });
-      if (socket && roomId) {
-        socket.emit("toggle-video", roomId, username, false);
+      if (roomId) {
       }
     } else {
       try {
@@ -1730,8 +1640,7 @@ export default function App() {
           next.add(username);
           return next;
         });
-        if (socket && roomId) {
-          socket.emit("toggle-video", roomId, username, true);
+        if (roomId) {
         }
         setTimeout(() => {
           if (collabVideoRef.current) {
@@ -1759,8 +1668,7 @@ export default function App() {
         next.delete(username);
         return next;
       });
-      if (socket && roomId) {
-        socket.emit("toggle-screen", roomId, username, false);
+      if (roomId) {
       }
     } else {
       try {
@@ -1772,8 +1680,7 @@ export default function App() {
           next.add(username);
           return next;
         });
-        if (socket && roomId) {
-          socket.emit("toggle-screen", roomId, username, true);
+        if (roomId) {
         }
         stream.getVideoTracks()[0].onended = () => {
           setIsCollabScreenSharing(false);
@@ -1783,8 +1690,7 @@ export default function App() {
             next.delete(username);
             return next;
           });
-          if (socket && roomId) {
-            socket.emit("toggle-screen", roomId, username, false);
+          if (roomId) {
           }
         };
         setTimeout(() => {
@@ -1809,8 +1715,7 @@ export default function App() {
       return next;
     });
 
-    if (socket && roomId) {
-      socket.emit("raise-hand", roomId, username, nextState);
+    if (roomId) {
     }
   };
 
@@ -1821,8 +1726,7 @@ export default function App() {
       [username]: { emoji, id: rId }
     }));
 
-    if (socket && roomId) {
-      socket.emit("send-reaction", roomId, username, emoji, rId);
+    if (roomId) {
     }
 
     setTimeout(() => {
@@ -1856,8 +1760,7 @@ export default function App() {
     setRoomMessages(prev => [...prev, msg]);
     setRoomInput('');
 
-    if (socket && roomId) {
-      socket.emit("send-message", activeRoomId, msg);
+    if (roomId) {
     } else {
       // If virtual study buddies are active, simulate high-quality interactive study responses!
       if (includeVirtualBuddies) {
@@ -2627,8 +2530,7 @@ export default function App() {
   const toggleVoiceChat = () => {
     const newState = !isVoiceChatEnabled;
     setIsVoiceChatEnabled(newState);
-    if (socket && roomId) {
-      socket.emit("toggle-audio", roomId, username, newState);
+    if (roomId) {
     }
   };
 
